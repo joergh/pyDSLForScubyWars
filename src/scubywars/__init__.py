@@ -1,0 +1,20 @@
+class dummy_enemy():
+    def is_enemy(self):
+        return False
+    def is_shot(self):
+        return False
+    def is_ship(self):
+        return False
+    def is_dead(self):
+        return False
+    def get_distance(self):
+        return 5000.0
+    def get_angle(self):
+        return 50.0
+    def get_signed_angle(self):
+        return 50.0
+    def get_id(self):
+        return 'dummy'
+    
+def dummy():
+    return dummy_enemy()

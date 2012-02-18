@@ -1,0 +1,41 @@
+HIT_DISTANCE = 200.0
+HIT_ANGLE=0.2
+DIST_WEIGHT=1.0
+ANGLE_WEIGHT=5.0
+HUNT_DISTANCE=200.0
+ABORT_DISTANCE=300.0
+ABORT_ANGLE=2.0
+MIN_DISTANCE=40.0
+TURN_PREC=0.2
+
+seeking::
+    find min distance
+    if can fire and angle < HIT_ANGLE and distance < HIT_DISTANCE
+        fire
+
+    find min (distance * DIST_WEIGHT + angle * ANGLE_WEIGHT) and is enemy 
+    
+    if angle > TURN_PREC
+    	turn to
+    
+    if distance > MIN_DISTANCE
+        thrust
+
+	if distance < HUNT_DISTANCE
+        state hunting
+	
+hunting::
+    if distance > ABORT_DISTANCE or angle > ABORT_ANGLE
+        state seeking
+
+    if is dead
+        state seeking
+
+	if angle > TURN_PREC
+    	turn to
+    
+    if angle < HIT_ANGLE and distance < HIT_DISTANCE
+        fire
+		
+    if distance > MIN_DISTANCE
+        thrust
