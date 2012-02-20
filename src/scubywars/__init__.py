@@ -1,4 +1,6 @@
 class dummy_enemy():
+    def get_vector(self):
+        return (0.0,0.0)
     def is_enemy(self):
         return False
     def is_shot(self):
@@ -15,6 +17,10 @@ class dummy_enemy():
         return 50.0
     def get_id(self):
         return 'dummy'
+    def get_name(self):
+        return 'dummy'
+    def is_dummy(self):
+        return True
     
 def dummy():
     return dummy_enemy()

@@ -6,10 +6,9 @@ Created on Feb 18, 2012
 
 preamble = '''
 # some simple helpers
+import threading
 from scubywars import world, bot, dummy
 from time import sleep
-
-enemy = dummy()
 
 def _is_filter_valid(obj):
     enemy, bool = obj
@@ -33,19 +32,23 @@ def _filter_find_max(obj1, obj2):
     else:
         return obj2
 
-# compiled states start here         
+# compiled states start here
+class bot_impl(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.enemy = dummy()
+        current_state = None
+        
+    def startup(self):
 '''
 
 postamble='''
-
-_current_state = {}
-
-def run_bot():
-    global enemy
-    
-    while True:
-        enemy = world.update(enemy)
-        _current_state()
-        bot.action()
-        world.wait_next()
+    def run(self):
+        self.current_state = self.{}
+        self.startup()
+        while True:
+            self.enemy = world.update(self.enemy)
+            self.current_state()
+            bot.action()
+            world.wait_next()
 '''

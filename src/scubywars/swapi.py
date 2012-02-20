@@ -44,6 +44,7 @@ class swconn:
 	dir = 0
 	
 	myplayers = {}
+	playernames = {}
 	players = []
 	
 	def __init__(self, host, port, type, name):
@@ -60,6 +61,12 @@ class swconn:
 	def get_name(self):
 		return self.name
 	
+	def get_playername(self, id):
+		try:
+			return self.playernames[id]
+		except:
+			return '(--)'
+		
 	def is_myplayer(self, id):
 		if self.myplayers.has_key(id):
 			return True
@@ -140,6 +147,7 @@ class swconn:
 					msg = unpack('>q', data)
 					try:
 						del self.rw.myplayers[msg[0]]
+						del self.rw.playernames[msg[0]]
 					except:
 						pass
 				elif type in (MSGTYPE_PLAYERNAME, MSGTYPE_PLAYERJOIN):
@@ -149,9 +157,9 @@ class swconn:
 					print 
 					for char in msg[1:]:
 						name += chr(char)
+					self.rw.playernames[msg[0]] = name
 					if name.startswith(self.rw.get_name()):
 						self.rw.myplayers[msg[0]] = name
-					print msg[0], name
 			def run(self):
 				while True:
 					msg = self.read_message()

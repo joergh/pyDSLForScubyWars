@@ -13,6 +13,8 @@ reserved = {
    'min' : 'MIN',
    'max' : 'MAX',
    'is'  : 'IS',
+   'not'  : 'NOT',
+   'targeted' : 'TARGETED',
    'thrust' : 'THRUST', 
    'turn' : 'TURN',
    'to'   : 'TO',
@@ -25,9 +27,12 @@ reserved = {
    'and' : 'AND',
    'or' : 'OR',
    'enemy' : 'ENEMY',
+   'dummy' : 'DUMMY',
    'ship' : 'SHIP',
    'shot' : 'SHOT',
    'dead' : 'DEAD',
+   'store' : 'STORE',
+   'recall' : 'RECALL',
    'end' : 'END',
 }
 
@@ -45,7 +50,10 @@ tokens = [
    'DIVIDE',
    'LPAREN',
    'RPAREN',
+   'LBRACKET',
+   'RBRACKET',
    'ASSIGN',
+   'FORMDEF',
    'COMMENT',
    'EQUAL',
    'LT',
@@ -62,7 +70,10 @@ t_TIMES   = r'\*'
 t_DIVIDE  = r'/'
 t_LPAREN  = r'\('
 t_RPAREN  = r'\)'
+t_LBRACKET= r'\['
+t_RBRACKET= r'\]'
 t_ASSIGN  = r'\='
+t_FORMDEF = r'\:\='
 t_LT      = r'\<'
 t_GT      = r'\>'
 t_LE      = r'\<='
@@ -85,6 +96,9 @@ def t_NEWLINE(t):
     t.lexer.lineno += 1
     return t
 
+def t_comment(t):
+    r'\#[^\n]*'
+    
 # Error handling rule
 def t_error(t):
     print "Illegal character '%s'" % t.value[0]

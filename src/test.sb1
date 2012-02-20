@@ -1,21 +1,32 @@
-HIT_DISTANCE = 200.0
+FIELD_SIZE=1000.0
+SHOT_SPEED=400.0
+ROT_SPEED=2*3.14
+
+HIT_DISTANCE = 600.0
 HIT_ANGLE=0.2
-DIST_WEIGHT=1.0
-ANGLE_WEIGHT=5.0
-HUNT_DISTANCE=200.0
-ABORT_DISTANCE=300.0
+DIST_WEIGHT=1/SHOT_SPEED
+ANGLE_WEIGHT=1/ROT_SPEED
+HUNT_DISTANCE=150.0
+ABORT_DISTANCE=250.0
 ABORT_ANGLE=2.0
-MIN_DISTANCE=40.0
+MIN_DISTANCE=60.0
 TURN_PREC=0.2
+ABORT_DIST_FACT=1.5
+
+MIN_ANGPREC=0.2
+MAX_ANGPREC=0.05
+ANG_FACT=(MIN_ANGPREC - MAX_ANGPREC) / FIELD_SIZE
+
+ANGLE_PREC := (FIELD_SIZE - distance) * ANG_FACT + MAX_ANGPREC 
+ENEMY_SCORE := distance * DIST_WEIGHT + angle * ANGLE_WEIGHT
 
 seeking::
-    find min distance
-    if can fire and angle < HIT_ANGLE and distance < HIT_DISTANCE
+    find min [ENEMY_SCORE] and is enemy
+		    
+    if can fire and angle < [ANGLE_PREC] and distance < HIT_DISTANCE
         fire
-
-    find min (distance * DIST_WEIGHT + angle * ANGLE_WEIGHT) and is enemy 
     
-    if angle > TURN_PREC
+    if angle > [ANGLE_PREC]
     	turn to
     
     if distance > MIN_DISTANCE
@@ -31,10 +42,10 @@ hunting::
     if is dead
         state seeking
 
-	if angle > TURN_PREC
+	if angle > [ANGLE_PREC]
     	turn to
     
-    if angle < HIT_ANGLE and distance < HIT_DISTANCE
+    if angle < [ANGLE_PREC] and distance < HIT_DISTANCE
         fire
 		
     if distance > MIN_DISTANCE

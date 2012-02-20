@@ -30,7 +30,7 @@ def _emit_action(p, line):
         _emit(p, 'print "{}"'.format(line))
     
 def _emit(p, line):
-    for i in range(p.parser.indent):
+    for i in range(p.parser.indent + 1):
         p.parser.out.write("    ")
     p.parser.out.write(line)
     p.parser.out.write('\n')
@@ -45,16 +45,24 @@ def p_statement_end(p):
     _emit(p, "")
     if p.parser.indent > 1:
         p.parser.indent -= 1
-    
-        
+          
 def p_statement(p):
     '''statement : assignment
+                 | formdef
                  | statechange
                  | statedef
                  | if
                  | find
                  | action'''
 
+def p_statement_store(p):
+    '''statement : STORE WORD NEWLINE'''
+    _emit(p, "self.{} = self.enemy".format(p[2]))
+
+def p_statement_recall(p):
+    '''statement : RECALL WORD NEWLINE'''
+    _emit(p, "self.enemy = self.{}".format(p[2]))
+    
 def p_action(p):
     '''action : FIRE
               | TURN LEFT
@@ -75,31 +83,49 @@ def p_statedef(p):
     '''statedef : WORD STATEDEF NEWLINE'''
     global _starting_state
     p.parser.indent = 0
-    _emit(p, "def {}():".format(p[1]))
+    _emit(p, "def {}(self):".format(p[1]))
     if not _starting_state:
         _starting_state = p[1]
     p.parser.indent = 1
-    _emit(p, "global enemy, _current_state")
+    _emit(p, "enemy = self.enemy")
     _emit_debug(p, "STATE: {}".format(p[1]))
 
 def p_statechange(p):
     '''statechange : STATE WORD NEWLINE'''
-    _emit(p, "_current_state = {}".format(p[2]))
+    _emit(p, "self.current_state = self.{}".format(p[2]))
     _emit_action(p, "return")
     
 def p_assignment(p):
-    '''assignment : WORD ASSIGN NUMBER NEWLINE'''
-    _emit(p, "{} = {}".format(p[1], p[3]))
+    '''assignment : WORD ASSIGN expression NEWLINE'''
+    _emit(p, "self.{} = {}".format(p[1], p[3]))
+    
+def p_formdef(p):
+    '''formdef : WORD FORMDEF expression NEWLINE'''
+    indent = p.parser.indent
+    p.parser.indent = 0
+    _emit(p, "def {}(self, enemy):".format(p[1]))
+    p.parser.indent += 1
+    _emit(p, "val = {}".format(p[3]))
+    if debug_mode:
+        _emit(p, "print '{} := ' + str(val)".format(p[1]))
+    _emit(p, "return val")
+    p.parser.indent = indent
     
 def p_if(p):
     '''if : IF boolean NEWLINE'''
     _emit(p,"if {}:".format(p[2]))
     p.parser.indent += 1
+
+def p_boolean_not(p):
+    '''boolean : NOT boolean'''
+    p[0] = 'not {}'.format(p[2])
     
 def p_boolean_is(p):
     '''boolean : IS SHIP
                | IS SHOT
                | IS ENEMY
+               | IS TARGETED
+               | IS DUMMY
                | IS DEAD'''
     p[0] = "enemy.is_{}()".format(p[2])
     
@@ -129,15 +155,17 @@ def p_find(p):
     p.parser.indent += 1
     _emit(p,"enemy = dummy()")
     p.parser.indent -= 1
-    _emit_debug(p,'Selected Enemy: " + str(enemy) + "')
+    _emit_debug(p,'Selected Enemy: " + str(self.enemy) + "')
+    _emit(p, "self.enemy = enemy")
         
 def p_find_filter(p):
     '''find : FIND MIN expression AND boolean NEWLINE'''
+    boolexpr = p[5].replace('enemy.', 'enemy.')
     _emit(p, "try:")
     p.parser.indent += 1
     _emit(p, "_obj_list = world.get_objects()")
-    _emit(p, "_obj_list = [ (enemy, {}) for enemy in _obj_list ]".format(p[5]))
-    _emit(p, "_obj_list = filter (_is_filter_valid, _obj_list)".format(p[5]))
+    _emit(p, "_obj_list = [ (enemy, {}) for enemy in _obj_list ]".format(boolexpr))
+    _emit(p, "_obj_list = filter (_is_filter_valid, _obj_list)".format(boolexpr))
     _emit(p, "_obj_list = [ (enemy, {}) for (enemy, bool) in _obj_list ]".format(p[3]))
     _emit(p, "enemy, _val = reduce (_filter_find_{}, _obj_list)".format(p[2]))
     p.parser.indent -= 1
@@ -145,7 +173,8 @@ def p_find_filter(p):
     p.parser.indent += 1
     _emit(p,"enemy = dummy()")
     p.parser.indent -= 1
-    _emit_debug(p,'Selected Enemy: " + str(enemy) + "')
+    _emit_debug(p,'Selected Enemy: " + str(self.enemy) + "')
+    _emit(p, "self.enemy = enemy")
     
 def p_boolean_comp(p):
     '''boolean : expression LT expression
@@ -162,14 +191,21 @@ def p_expression_binop(p):
            | expression DIVIDE expression'''
     p[0] = "{} {} {}".format(p[1], p[2], p[3])
 
-def p_expression_bracket(p):
+def p_expression_paren(p):
     '''expression : LPAREN expression RPAREN'''
     p[0] = "({})".format(p[2])
 
+def p_expression_bracket(p):
+    '''expression : LBRACKET expression RBRACKET'''
+    p[0] = "{}(enemy)".format(p[2])
+
 def p_expression_number(p):
-    '''expression : NUMBER
-                  | WORD'''
+    '''expression : NUMBER'''
     p[0] = str(p[1])
+
+def p_expression_var(p):
+    '''expression : WORD'''
+    p[0] = "self.{}".format(p[1])
 
 def p_expression_enemy(p):
     '''expression : DIST
@@ -183,7 +219,7 @@ def do_generate(source, debug=False):
     global debug_mode
     debug_mode = debug
     parser = yacc.yacc()
-    parser.indent = 0
+    parser.indent = 1
     parser.out = open("botcode.py", "w")
     parser.out.write(preamble)
     parser.parse(open(source).read(), debug=False)
