@@ -72,12 +72,12 @@ def p_action(p):
         func = str(p[1])
     else:
         func = "{}_{}".format(p[1], p[2])
-    _emit_action(p, "bot.{}()".format(func))
+    _emit_action(p, "self.bot.{}()".format(func))
     
 def p_action_turn_to(p):
     '''action : TURN TO'''
     func = "{}_{}".format(p[1], p[2])
-    _emit_action(p, "bot.{}(enemy)".format(func))
+    _emit_action(p, "self.bot.{}(enemy)".format(func))
     
 def p_statedef(p):
     '''statedef : WORD STATEDEF NEWLINE'''
@@ -131,7 +131,7 @@ def p_boolean_is(p):
     
 def p_boolean_can(p):
     '''boolean : CAN FIRE'''
-    p[0] = "bot.can_{}()".format(p[2])
+    p[0] = "self.bot.can_{}()".format(p[2])
     
 def p_boolean_binop(p):
     '''boolean : boolean AND boolean
@@ -147,7 +147,7 @@ def p_find(p):
             | FIND MAX expression NEWLINE'''
     _emit(p, "try:")
     p.parser.indent += 1
-    _emit(p, "_obj_list = world.get_objects()")
+    _emit(p, "_obj_list = self.world.get_objects()")
     _emit(p, "_obj_list = [ (enemy, {}) for enemy in _obj_list ]".format(p[3]))
     _emit(p, "enemy, _val = reduce (_filter_find_{}, _obj_list)".format(p[2]))
     p.parser.indent -= 1
@@ -163,7 +163,7 @@ def p_find_filter(p):
     boolexpr = p[5].replace('enemy.', 'enemy.')
     _emit(p, "try:")
     p.parser.indent += 1
-    _emit(p, "_obj_list = world.get_objects()")
+    _emit(p, "_obj_list = self.world.get_objects()")
     _emit(p, "_obj_list = [ (enemy, {}) for enemy in _obj_list ]".format(boolexpr))
     _emit(p, "_obj_list = filter (_is_filter_valid, _obj_list)".format(boolexpr))
     _emit(p, "_obj_list = [ (enemy, {}) for (enemy, bool) in _obj_list ]".format(p[3]))

@@ -34,10 +34,13 @@ def _filter_find_max(obj1, obj2):
 
 # compiled states start here
 class bot_impl(threading.Thread):
-    def __init__(self):
+    def __init__(self, server):
         threading.Thread.__init__(self)
         self.enemy = dummy()
         current_state = None
+        self.server = server
+        self.world = world.world(server)
+        self.bot = bot.bot(server)
         
     def startup(self):
 '''
@@ -47,8 +50,8 @@ postamble='''
         self.current_state = self.{}
         self.startup()
         while True:
-            self.enemy = world.update(self.enemy)
+            self.enemy = self.world.update(self.enemy)
             self.current_state()
-            bot.action()
-            world.wait_next()
+            self.bot.action()
+            self.world.wait_next()
 '''
